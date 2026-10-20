@@ -90,7 +90,10 @@ class TestDockerManagerStopContainer:
             manager.stop_container("dockfleet_api")
 
         run.assert_called_once_with(
-            ["docker", "stop", "dockfleet_api"], capture_output=True, text=True
+            ["docker", "stop", "dockfleet_api"],
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
 
     def test_absent_container_is_treated_as_already_stopped(self):
@@ -101,6 +104,16 @@ class TestDockerManagerStopContainer:
         )
 
         with patch("dockfleet.core.docker.subprocess.run", return_value=result):
+            manager.stop_container("dockfleet_api")
+
+    @patch("dockfleet.core.docker.subprocess.run")
+    def test_stop_container_timeout_raises_runtime_error(self, mock_run):
+        manager = DockerManager()
+        mock_run.side_effect = subprocess.TimeoutExpired(
+            cmd=["docker", "stop", "dockfleet_api"], timeout=60
+        )
+
+        with pytest.raises(RuntimeError, match="timed out after 60 seconds"):
             manager.stop_container("dockfleet_api")
 
     @patch("dockfleet.core.docker.subprocess.run")

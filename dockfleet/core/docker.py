@@ -59,9 +59,17 @@ class DockerManager:
         stderr attached so callers see the actual cause (daemon unreachable,
         permission denied, ...) instead of a bare exit status.
         """
-        result = subprocess.run(
-            ["docker", "stop", name], capture_output=True, text=True
-        )
+        try:
+            result = subprocess.run(
+                ["docker", "stop", name],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError(
+                f"docker stop {name} timed out after 60 seconds"
+            ) from exc
 
         if result.returncode != 0:
             stderr = (result.stderr or "").strip()
