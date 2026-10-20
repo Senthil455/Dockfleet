@@ -6,7 +6,9 @@ dashboard with no services.  The config anchor is now the project root, with
 an optional environment override.
 """
 
-from dockfleet.dashboard.api import _get_default_config_path
+import pytest
+
+from dockfleet.dashboard.api import _get_default_config_path, on_startup
 from dockfleet.health.models import PROJECT_ROOT
 
 
@@ -34,3 +36,11 @@ def test_relative_override_resolves_against_working_directory(tmp_path, monkeypa
     monkeypatch.setenv("DOCKFLEET_CONFIG", "custom.yaml")
 
     assert _get_default_config_path() == (tmp_path / "custom.yaml").resolve()
+
+
+def test_missing_config_file_stops_startup(tmp_path, monkeypatch):
+    missing = tmp_path / "missing.yaml"
+    monkeypatch.setenv("DOCKFLEET_CONFIG", str(missing))
+
+    with pytest.raises(FileNotFoundError, match="missing.yaml"):
+        on_startup()

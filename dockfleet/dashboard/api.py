@@ -62,6 +62,10 @@ def on_startup() -> None:
     init_db()
 
     config_path = _get_default_config_path()
+    if not config_path.is_file():
+        raise FileNotFoundError(
+            f"Dashboard configuration file not found: {config_path}"
+        )
 
     try:
         bootstrap_from_path(str(config_path))
